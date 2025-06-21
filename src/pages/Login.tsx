@@ -94,6 +94,10 @@ const Login = () => {
             <div className="text-center text-sm text-gray-500">
               Don't have an account?{" "}
               <a href="/signup" className="text-indigo-600 hover:underline">Sign up</a>
+              <div className="mt-6 text-xs text-center text-gray-400">
+  Made by: <strong>Seeram Shanmukh Srinivas</strong>, <strong>Akash N</strong>, <strong>Nikitha N</strong>
+</div>
+
             </div>
           </CardContent>
         </Card>

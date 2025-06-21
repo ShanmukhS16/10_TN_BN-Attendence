@@ -14,6 +14,7 @@ import CollegeSelection from "./pages/CollegeSelection";
 import AttendanceMarking from "./pages/AttendanceMarking";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import { Analytics } from "@vercel/analytics/next"
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ export default function App() {
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
+            <Footer />
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
