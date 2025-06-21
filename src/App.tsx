@@ -15,6 +15,8 @@ import CollegeSelection from "./pages/CollegeSelection";
 import AttendanceMarking from "./pages/AttendanceMarking";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import EmailVerified from "./pages/EmailVerified";
+
 import { Analytics } from "@vercel/analytics/next"
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Navigate to="/dashboard" replace />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/email-verified" element={<EmailVerified />} />
+
     <Route path="/signup" element={<Signup />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route

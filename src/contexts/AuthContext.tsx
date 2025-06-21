@@ -47,7 +47,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  fetchData: () => void;
+  fetchData: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<string>;
   addStudent: (student: Omit<Student, "id" | "attendancePercentage" | "createdBy">) => Promise<void>;
   updateStudent: (id: string, updates: Partial<Student>) => Promise<void>;
@@ -132,35 +132,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, []);
 
-  const addStudent = async (studentData: Omit<Student, "id" | "attendancePercentage" | "createdBy">) => {
-    const newStudent = {
-      ...studentData,
-      attendancePercentage: 0,
-      createdBy: user?.id || "system",
-    };
-    await supabase.from("students").insert(newStudent);
-    fetchData();
+const addStudent = async (studentData: Omit<Student, "id" | "attendancePercentage" | "createdBy">) => {
+  if (!user) return;
+
+  const newStudent = {
+    ...studentData,
+    attendancePercentage: 0,
+    createdBy: user.id,
   };
+
+  const { error } = await supabase.from("students").insert(newStudent);
+  if (error) {
+    console.error("❌ Failed to insert student:", error.message);
+    return;
+  }
+
+  await fetchData(); // make sure to refetch data after insertion
+};
+
 
   const updateStudent = async (id: string, updates: Partial<Student>) => {
     await supabase.from("students").update(updates).eq("id", id);
-    fetchData();
+    await fetchData();
   };
 
   const deleteStudent = async (id: string) => {
     await supabase.from("students").delete().eq("id", id);
     await supabase.from("attendance").delete().eq("studentId", id);
-    fetchData();
+    await fetchData();
   };
 
   const addCollege = async (college: Omit<College, "id">) => {
     await supabase.from("colleges").insert(college);
-    fetchData();
+    await fetchData();
   };
 
   const updateCollege = async (id: string, updates: Partial<College>) => {
     await supabase.from("colleges").update(updates).eq("id", id);
-    fetchData();
+    await fetchData();
   };
 
   const markAttendance = async (studentId: string, date: string, present: boolean) => {
@@ -178,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.from("attendance").insert(record);
     }
     await updateStudentAttendancePercentage(studentId);
-    fetchData();
+    await fetchData();
   };
 
   const updateStudentAttendancePercentage = async (studentId: string) => {
