@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,19 +91,22 @@ const Login = () => {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+
             <div className="text-right text-sm">
-  <Link to="/reset-password" className="text-indigo-600 hover:underline">
-    Forgot password?
-  </Link>
-</div>
+              <Link to="/reset-password" className="text-indigo-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
 
             <div className="text-center text-sm text-gray-500">
               Don't have an account?{" "}
-              <a href="/signup" className="text-indigo-600 hover:underline">Sign up</a>
-              <div className="mt-6 text-xs text-center text-gray-400">
-  Made by: <strong>Seeram Shanmukh Srinivas</strong>, <strong>Akash N</strong>, <strong>Nikitha N</strong>
-</div>
+              <Link to="/signup" className="text-indigo-600 hover:underline">
+                Sign up
+              </Link>
+            </div>
 
+            <div className="mt-6 text-xs text-center text-gray-400">
+              Made by: <strong>Seeram Shanmukh Srinivas</strong>, <strong>Akash N</strong>, <strong>Nikitha N</strong>
             </div>
           </CardContent>
         </Card>
