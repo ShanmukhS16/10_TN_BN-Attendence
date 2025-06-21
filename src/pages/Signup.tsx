@@ -19,7 +19,7 @@ export default function Signup() {
       email,
       password,
       options: {
-        data: { name },
+        data: { name },emailRedirectTo: "https://10-tn-bn-attendence.vercel.app/email-verified"
       },
     });
 
