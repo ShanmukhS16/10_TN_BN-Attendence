@@ -6,7 +6,13 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import UserDashboard from "@/components/user/UserDashboard";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Select, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -41,10 +47,21 @@ const Dashboard = () => {
       .eq("id", selectedUserId);
 
     if (error) {
-      setMessage("❌ Failed to promote: " + error.message);
+      setMessage("\u274C Failed to promote: " + error.message);
     } else {
-      setMessage("✅ User promoted to admin successfully!");
-      setAllUsers(allUsers.map(u => u.id === selectedUserId ? { ...u, role: "admin" } : u));
+      setMessage("\u2705 User promoted to admin successfully!");
+      setAllUsers((prev) =>
+        prev.map((u) => (u.id === selectedUserId ? { ...u, role: "admin" } : u))
+      );
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    const { error } = await supabase.from("users").delete().eq("id", id);
+    if (error) {
+      alert("Failed to delete user: " + error.message);
+    } else {
+      setAllUsers((prev) => prev.filter((u) => u.id !== id));
     }
   };
 
@@ -89,27 +106,28 @@ const Dashboard = () => {
           <AdminApprovalPanel />
           <AdminDashboard />
 
-          {/* Promote to Admin Section */}
           <div className="bg-white p-4 rounded-lg shadow-md mt-8">
             <h2 className="text-lg font-semibold mb-2">Promote User to Admin</h2>
 
-            <Select
-              onValueChange={(value) => setSelectedUserId(value)}
-              defaultValue=""
-            >
-              <SelectItem value="" disabled>Select a user</SelectItem>
-              {allUsers
-                .filter((u) => u.role !== "admin")
-                .map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name} ({u.email})
-                  </SelectItem>
-                ))}
+            <Select onValueChange={(value) => setSelectedUserId(value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a user" />
+              </SelectTrigger>
+              <SelectContent>
+                {allUsers
+                  .filter((u) => u.role !== "admin")
+                  .map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name} ({u.email})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
             </Select>
 
             <Button
               className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={promoteToAdmin}
+              disabled={!selectedUserId}
             >
               Promote to Admin
             </Button>
@@ -130,6 +148,7 @@ const Dashboard = () => {
                   <th className="p-2 border">Email</th>
                   <th className="p-2 border">Role</th>
                   <th className="p-2 border">Approved</th>
+                  <th className="p-2 border">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,8 +157,15 @@ const Dashboard = () => {
                     <td className="p-2 border">{u.name}</td>
                     <td className="p-2 border">{u.email}</td>
                     <td className="p-2 border">{u.role}</td>
+                    <td className="p-2 border">{u.approved ? "✅ Yes" : "⛔ No"}</td>
                     <td className="p-2 border">
-                      {u.approved ? "✅ Yes" : "⛔ No"}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteUser(u.id)}
+                      >
+                        Remove
+                      </Button>
                     </td>
                   </tr>
                 ))}
