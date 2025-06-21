@@ -95,8 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const requestPasswordReset = async (email: string): Promise<string> => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+redirectTo: "https://10-tn-bn-attendence.vercel.app/reset-password",    });
     return error ? `❌ ${error.message}` : "✅ Password reset link sent!";
   };
 
