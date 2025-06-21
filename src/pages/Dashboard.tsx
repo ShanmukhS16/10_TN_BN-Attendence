@@ -6,13 +6,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import UserDashboard from "@/components/user/UserDashboard";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Select, SelectItem } from "@/components/ui/select";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -50,9 +44,7 @@ const Dashboard = () => {
       setMessage("❌ Failed to promote: " + error.message);
     } else {
       setMessage("✅ User promoted to admin successfully!");
-      setAllUsers((prev) =>
-        prev.map((u) => (u.id === selectedUserId ? { ...u, role: "admin" } : u))
-      );
+      setAllUsers(allUsers.map(u => u.id === selectedUserId ? { ...u, role: "admin" } : u));
     }
   };
 
@@ -101,25 +93,23 @@ const Dashboard = () => {
           <div className="bg-white p-4 rounded-lg shadow-md mt-8">
             <h2 className="text-lg font-semibold mb-2">Promote User to Admin</h2>
 
-            <Select onValueChange={(value) => setSelectedUserId(value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {allUsers
-                  .filter((u) => u.role !== "admin")
-                  .map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.name} ({u.email})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
+            <Select
+              onValueChange={(value) => setSelectedUserId(value)}
+              defaultValue=""
+            >
+              <SelectItem value="" disabled>Select a user</SelectItem>
+              {allUsers
+                .filter((u) => u.role !== "admin")
+                .map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name} ({u.email})
+                  </SelectItem>
+                ))}
             </Select>
 
             <Button
               className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white"
               onClick={promoteToAdmin}
-              disabled={!selectedUserId}
             >
               Promote to Admin
             </Button>
