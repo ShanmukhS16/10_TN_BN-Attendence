@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   Users,
   GraduationCap,
@@ -11,30 +14,31 @@ import {
   LogOut,
   Plus,
 } from "lucide-react";
+
 import StudentManagement from "./StudentManagement";
-import AttendanceReports from "./AttendanceReports";
 import CollegeManagement from "./CollegeManagement";
 import AddStudentModal from "./AddStudentModal";
+// NOTE: Removed AttendanceReports import to avoid duplicate rendering
 
-const AdminDashboard = () => {
+function AdminDashboard() {
   const { user, logout, students, colleges } = useAuth();
+  const navigate = useNavigate();
+
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
 
   const totalStudents = students.length;
   const totalColleges = colleges.length;
 
-  // Calculate overall attendance percentage
+  // NaN-safe overall attendance
   const overallAttendance =
     students.length > 0
-      ? students.reduce(
-          (sum, student) => sum + student.attendancePercentage,
-          0,
-        ) / students.length
+      ? students.reduce((sum, s) => sum + Number(s.attendancePercentage ?? 0), 0) /
+        students.length
       : 0;
 
-  // Calculate students with low attendance (< 75%)
+  // NaN-safe low attendance count
   const lowAttendanceCount = students.filter(
-    (student) => student.attendancePercentage < 75,
+    (s) => Number(s.attendancePercentage ?? 0) < 75
   ).length;
 
   return (
@@ -48,14 +52,11 @@ const AdminDashboard = () => {
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Admin Dashboard
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Welcome back, {user?.name}
-                </p>
+                <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p className="text-sm text-gray-600">Welcome back, {user?.name}</p>
               </div>
             </div>
+
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => setShowAddStudentModal(true)}
@@ -64,11 +65,7 @@ const AdminDashboard = () => {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Student
               </Button>
-              <Button
-                variant="outline"
-                onClick={logout}
-                className="flex items-center gap-2"
-              >
+              <Button variant="outline" onClick={logout} className="flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Logout
               </Button>
@@ -77,6 +74,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
+      {/* Body */}
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -88,9 +86,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Total Students</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {totalStudents}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{totalStudents}</p>
                 </div>
               </div>
             </CardContent>
@@ -104,9 +100,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Colleges</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {totalColleges}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{totalColleges}</p>
                 </div>
               </div>
             </CardContent>
@@ -136,9 +130,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Low Attendance</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {lowAttendanceCount}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{lowAttendanceCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -150,48 +142,47 @@ const AdminDashboard = () => {
           <CardContent className="p-0">
             <Tabs defaultValue="students" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger
-                  value="students"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="students" className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Students
                 </TabsTrigger>
-                <TabsTrigger
-                  value="colleges"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="colleges" className="flex items-center gap-2">
                   <GraduationCap className="w-4 h-4" />
                   Colleges
                 </TabsTrigger>
-                <TabsTrigger
-                  value="reports"
+
+                {/* Route-based Reports button (no embedded duplicate) */}
+                <Button
+                  variant="outline"
                   className="flex items-center gap-2"
+                  onClick={() => navigate("/reports")}
                 >
                   <TrendingUp className="w-4 h-4" />
                   Reports
-                </TabsTrigger>
+                </Button>
               </TabsList>
+
               <TabsContent value="students" className="p-6">
                 <StudentManagement />
               </TabsContent>
+
               <TabsContent value="colleges" className="p-6">
                 <CollegeManagement />
               </TabsContent>
+
+              {/* Removed:
               <TabsContent value="reports" className="p-6">
                 <AttendanceReports />
               </TabsContent>
+              */}
             </Tabs>
           </CardContent>
         </Card>
       </div>
 
-      <AddStudentModal
-        open={showAddStudentModal}
-        onOpenChange={setShowAddStudentModal}
-      />
+      <AddStudentModal open={showAddStudentModal} onOpenChange={setShowAddStudentModal} />
     </div>
   );
-};
+}
 
 export default AdminDashboard;
