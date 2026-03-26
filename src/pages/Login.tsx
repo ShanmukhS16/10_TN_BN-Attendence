@@ -106,7 +106,7 @@ const Login = () => {
             </div>
 
             <div className="mt-6 text-xs text-center text-gray-400">
-              Made by: <strong>Seeram Shanmukh Srinivas</strong>, <strong>Akash N</strong>, <strong>Nikitha N</strong>
+              Made by: <strong>Seeram Shanmukh Srinivas</strong>, <strong>Akash N</strong>
             </div>
           </CardContent>
         </Card>
