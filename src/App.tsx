@@ -16,6 +16,7 @@ import AttendanceMarking from "./pages/AttendanceMarking";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
+import About from "./pages/About";
 
 import { Analytics } from "@vercel/analytics/next"
 
@@ -79,6 +80,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route path="/about" element={<About />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
