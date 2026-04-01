@@ -1,7 +1,7 @@
 NCC Attendance Management System
 
 A scalable, full-stack web application designed to manage attendance for NCC (National Cadet Corps) units across multiple colleges.
-Built to handle large-scale deployments (100+ institutions, 10,000+ cadets) with real-time tracking, analytics, and admin controls.
+Built to handle large-scale deployments (30+ institutions, 1,500+ cadets) with real-time tracking, analytics, and admin controls.
 
 Overview
 
