@@ -49,6 +49,7 @@ const StudentManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCollege, setSelectedCollege] = useState<string>("all");
   const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filter students based on search and college selection
   const filteredStudents = students.filter((student) => {
@@ -257,20 +258,19 @@ const confirmDeleteStudent = async () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-           <AlertDialogAction
-  onClick={(e) => {
-    e.preventDefault();
-    confirmDeleteStudent();
-  }}
-  disabled={isDeleting}
-  className="bg-red-600 hover:bg-red-700"
->
-  {isDeleting ? "Deleting..." : "Delete"}
-</AlertDialogAction>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
+  <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+  <AlertDialogAction
+    onClick={(e) => {
+      e.preventDefault();
+      confirmDeleteStudent();
+    }}
+    disabled={isDeleting}
+    className="bg-red-600 hover:bg-red-700"
+  >
+    {isDeleting ? "Deleting..." : "Delete"}
+  </AlertDialogAction>
+</AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
