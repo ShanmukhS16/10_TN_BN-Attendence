@@ -258,10 +258,16 @@ const confirmDeleteStudent = async () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteStudent}
-              className="bg-red-600 hover:bg-red-700"
-            >
+           <AlertDialogAction
+  onClick={(e) => {
+    e.preventDefault();
+    confirmDeleteStudent();
+  }}
+  disabled={isDeleting}
+  className="bg-red-600 hover:bg-red-700"
+>
+  {isDeleting ? "Deleting..." : "Delete"}
+</AlertDialogAction>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
