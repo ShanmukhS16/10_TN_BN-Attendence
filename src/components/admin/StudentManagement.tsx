@@ -75,14 +75,19 @@ const confirmDeleteStudent = async () => {
 
   try {
     setIsDeleting(true);
-    setDeleteStudentId(null); // close dialog immediately
 
     await deleteStudent(idToDelete);
+
     toast.success("Student deleted successfully");
   } catch (error) {
     toast.error("Failed to delete student. Please try again.");
   } finally {
     setIsDeleting(false);
+    setDeleteStudentId(null);
+
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+    }, 0);
   }
 };
 
@@ -244,11 +249,12 @@ const confirmDeleteStudent = async () => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-         open={!!deleteStudentId}
+     <AlertDialog
+  open={!!deleteStudentId}
   onOpenChange={(open) => {
-    if (!open) setDeleteStudentId(null);}}
-      >
+    if (!open && !isDeleting) setDeleteStudentId(null);
+  }}
+>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Student</AlertDialogTitle>
@@ -262,7 +268,6 @@ const confirmDeleteStudent = async () => {
 
   <AlertDialogAction
     onClick={(e) => {
-      e.preventDefault();
       confirmDeleteStudent();
     }}
     disabled={isDeleting}
