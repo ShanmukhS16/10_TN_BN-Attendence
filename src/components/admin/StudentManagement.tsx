@@ -67,17 +67,18 @@ const StudentManagement = () => {
     setDeleteStudentId(studentId);
   };
 
-  const confirmDeleteStudent = async () => {
-    if (deleteStudentId) {
-      try {
-        await deleteStudent(deleteStudentId);
-        toast.success("Student deleted successfully");
-        setDeleteStudentId(null);
-      } catch (error) {
-        toast.error("Failed to delete student. Please try again.");
-      }
-    }
-  };
+const confirmDeleteStudent = async () => {
+  if (!deleteStudentId) return;
+
+  try {
+    await deleteStudent(deleteStudentId);
+    toast.success("Student deleted successfully");
+  } catch (error) {
+    toast.error("Failed to delete student. Please try again.");
+  } finally {
+    setDeleteStudentId(null);
+  }
+};
 
   const getCollegeName = (collegeId: string) => {
     const college = colleges.find((c) => c.id === collegeId);
@@ -238,8 +239,9 @@ const StudentManagement = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
-        open={deleteStudentId !== null}
-        onOpenChange={() => setDeleteStudentId(null)}
+         open={!!deleteStudentId}
+  onOpenChange={(open) => {
+    if (!open) setDeleteStudentId(null);}}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
