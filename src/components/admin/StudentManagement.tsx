@@ -68,15 +68,20 @@ const StudentManagement = () => {
   };
 
 const confirmDeleteStudent = async () => {
-  if (!deleteStudentId) return;
+  if (!deleteStudentId || isDeleting) return;
+
+  const idToDelete = deleteStudentId;
 
   try {
-    await deleteStudent(deleteStudentId);
+    setIsDeleting(true);
+    setDeleteStudentId(null); // close dialog immediately
+
+    await deleteStudent(idToDelete);
     toast.success("Student deleted successfully");
   } catch (error) {
     toast.error("Failed to delete student. Please try again.");
   } finally {
-    setDeleteStudentId(null);
+    setIsDeleting(false);
   }
 };
 
