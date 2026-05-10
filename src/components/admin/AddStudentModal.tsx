@@ -125,15 +125,13 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
 
   const commonRanks = [
     "Cadet",
-    "Senior Cadet",
-    "Cadet Captain",
-    "Cadet Major",
-    "Cadet Lieutenant Colonel",
-    "Lieutenant",
-    "Captain",
-    "Major",
-    "Lieutenant Colonel",
-    "Colonel",
+    "Lance Corporal",
+    "Corporal",
+    "Sargent",
+    "QuaterMaster",
+    "Company Sargent Major",
+    "Cadet Under Officer",
+    "Senior Under Officer",
   ];
 
   return (
