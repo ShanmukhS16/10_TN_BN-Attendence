@@ -250,8 +250,6 @@ const confirmDeleteStudent = async () => {
             </TableBody>
           </Table>
         )}
-        );
-        };
       </div>
 
       {/* Delete Confirmation Dialog */}
