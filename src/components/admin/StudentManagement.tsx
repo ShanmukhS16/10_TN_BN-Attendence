@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import EditStudentModal from "./EditStudentModal";
 
 const StudentManagement = () => {
   const { students, colleges, deleteStudent } = useAuth();
@@ -50,6 +51,7 @@ const StudentManagement = () => {
   const [selectedCollege, setSelectedCollege] = useState<string>("all");
   const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<any | null>(null);
 
   // Filter students based on search and college selection
   const filteredStudents = students.filter((student) => {
@@ -227,10 +229,12 @@ const confirmDeleteStudent = async () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Student
-                        </DropdownMenuItem>
+                       <DropdownMenuItem
+  onClick={() => setEditingStudent(student)}
+>
+  <Edit className="w-4 h-4 mr-2" />
+  Edit Student
+</DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
                           onClick={() => handleDeleteStudent(student.id)}
@@ -246,6 +250,8 @@ const confirmDeleteStudent = async () => {
             </TableBody>
           </Table>
         )}
+        );
+        };
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -267,7 +273,7 @@ const confirmDeleteStudent = async () => {
   <AlertDialogCancel>Cancel</AlertDialogCancel>
 
   <AlertDialogAction
-    onClick={(e) => {
+    onClick={() => {
       confirmDeleteStudent();
     }}
     disabled={isDeleting}
@@ -278,6 +284,15 @@ const confirmDeleteStudent = async () => {
 </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {editingStudent && (
+  <EditStudentModal
+    open={!!editingStudent}
+    student={editingStudent}
+    onOpenChange={(open) => {
+      if (!open) setEditingStudent(null);
+    }}
+  />
+)}
     </div>
   );
 };
