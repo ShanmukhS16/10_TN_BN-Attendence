@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 
 import { Label } from "@/components/ui/label";
-
 import { toast } from "sonner";
 
 interface EditStudentModalProps {
@@ -31,15 +30,13 @@ interface EditStudentModalProps {
 
 const commonRanks = [
   "Cadet",
-  "Senior Cadet",
-  "Cadet Captain",
-  "Cadet Major",
-  "Cadet Lieutenant Colonel",
-  "Lieutenant",
-  "Captain",
-  "Major",
-  "Lieutenant Colonel",
-  "Colonel",
+  "Lance Corporal",
+  "Corporal",
+  "Sergeant",
+  "Company Quarter Master Sergeant (CQMS)",
+  "Company Sergeant Major (CSM)",
+  "Junior Under Officer (JUO)",
+  "Senior Under Officer (SUO)",
 ];
 
 const EditStudentModal: React.FC<EditStudentModalProps> = ({
@@ -76,6 +73,12 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
     }));
   };
 
+  const clearPointerEvents = () => {
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+    }, 0);
+  };
+
   const handleUpdate = async () => {
     try {
       setLoading(true);
@@ -83,17 +86,25 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
       await updateStudent(student.id, formData);
 
       toast.success("Student updated successfully");
-
       onOpenChange(false);
     } catch (error) {
       toast.error("Failed to update student");
     } finally {
       setLoading(false);
+      clearPointerEvents();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!loading) {
+          onOpenChange(value);
+          clearPointerEvents();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[600px] bg-slate-900">
         <DialogHeader>
           <DialogTitle className="text-white text-xl">
@@ -104,7 +115,6 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label className="text-slate-200">Full Name</Label>
-
             <Input
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
@@ -113,27 +123,19 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-slate-200">
-              Regimental Number
-            </Label>
-
+            <Label className="text-slate-200">Regimental Number</Label>
             <Input
               value={formData.regimentalNo}
-              onChange={(e) =>
-                handleChange("regimentalNo", e.target.value)
-              }
+              onChange={(e) => handleChange("regimentalNo", e.target.value)}
               className="bg-white text-black"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-slate-200">Rank</Label>
-
             <Select
               value={formData.rank}
-              onValueChange={(value) =>
-                handleChange("rank", value)
-              }
+              onValueChange={(value) => handleChange("rank", value)}
             >
               <SelectTrigger className="bg-white text-black">
                 <SelectValue placeholder="Select Rank" />
@@ -151,12 +153,9 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
 
           <div className="space-y-2">
             <Label className="text-slate-200">College</Label>
-
             <Select
               value={formData.collegeId}
-              onValueChange={(value) =>
-                handleChange("collegeId", value)
-              }
+              onValueChange={(value) => handleChange("collegeId", value)}
             >
               <SelectTrigger className="bg-white text-black">
                 <SelectValue placeholder="Select College" />
@@ -164,10 +163,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({
 
               <SelectContent>
                 {colleges.map((college: any) => (
-                  <SelectItem
-                    key={college.id}
-                    value={college.id}
-                  >
+                  <SelectItem key={college.id} value={college.id}>
                     {college.name}
                   </SelectItem>
                 ))}
