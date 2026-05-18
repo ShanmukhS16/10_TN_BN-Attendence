@@ -28,6 +28,7 @@ const AttendanceMarking = () => {
     colleges,
     markAttendance,
     fetchData,
+    attendanceRecords,
   } = useAuth();
 
   const navigate = useNavigate();
