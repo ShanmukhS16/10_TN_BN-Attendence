@@ -184,11 +184,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await fetchData();
   };
 
-  const deleteStudent = async (id: string) => {
-    await supabase.from("students").delete().eq("id", id);
-    await supabase.from("attendance").delete().eq("studentId", id);
-    await fetchData();
-  };
+  const deleteStudent = async (studentId: string) => {
+  try {
+    // delete attendance first
+    const { error: attendanceError } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("studentId", studentId);
+
+    if (attendanceError) {
+      console.error("❌ Attendance delete failed:", attendanceError.message);
+      throw attendanceError;
+    }
+
+    // delete student
+    const { error: studentError } = await supabase
+      .from("students")
+      .delete()
+      .eq("id", studentId);
+
+    if (studentError) {
+      console.error("❌ Student delete failed:", studentError.message);
+      throw studentError;
+    }
+
+    // update UI instantly
+    setStudents((prev) =>
+      prev.filter((student) => student.id !== studentId)
+    );
+
+    // remove attendance locally too
+    setAttendanceRecords((prev) =>
+      prev.filter((record) => record.studentId !== studentId)
+    );
+
+    console.log("✅ Student deleted successfully");
+  } catch (err) {
+    console.error("⚠️ deleteStudent failed:", err);
+    throw err;
+  }
+};
 
   // ---------------- COLLEGE OPERATIONS ----------------
   const addCollege = async (college: Omit<College, "id">) => {
