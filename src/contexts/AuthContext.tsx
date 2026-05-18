@@ -237,97 +237,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // ---------------- ATTENDANCE OPERATIONS ----------------
-  const markAttendance = async (
-    studentId: string,
-    date: string,
-    present: boolean
-  ) => {
-    try {
-      const record = {
+ const markAttendance = async (
+  studentId: string,
+  date: string,
+  present: boolean
+) => {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      throw new Error("Not logged in");
+    }
+
+    const response = await fetch("/api/markAttendance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
         studentId,
         date,
         present,
-        markedBy: user?.id || "system",
-        timestamp: Date.now(),
-      };
+      }),
+    });
 
-      const existing = attendanceRecords.find(
-        (r) => r.studentId === studentId && r.date === date
-      );
+    const result = await response.json();
 
-      let response;
-      if (existing) {
-        response = await supabase
-          .from("attendance")
-          .update({
-            present: record.present,
-            markedBy: record.markedBy,
-            timestamp: record.timestamp,
-          })
-          .eq("id", existing.id);
-      } else {
-        response = await supabase.from("attendance").insert(record);
-      }
-
-      if (response.error) throw response.error;
-
-      // ✅ Update attendance record locally
-      setAttendanceRecords((prev) => {
-        const others = prev.filter(
-          (a) => !(a.studentId === studentId && a.date === date)
-        );
-        return [...others, { ...record, id: existing?.id || Math.random().toString() }];
-      });
-
-      // ✅ Update attendance stats for student
-      await updateStudentAttendanceStats(studentId);
-    } catch (err) {
-      console.error("⚠️ markAttendance failed:", err);
-      throw err;
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to mark attendance");
     }
-  };
 
-  const updateStudentAttendanceStats = async (studentId: string) => {
-    try {
-      const { data: studentRecords, error } = await supabase
-        .from("attendance")
-        .select("present")
-        .eq("studentId", studentId);
-
-      if (error) throw error;
-
-      const total_classes = studentRecords?.length || 0;
-      const attended_classes = studentRecords?.filter((r) => r.present).length || 0;
-      const percentage = total_classes
-        ? Math.round((attended_classes / total_classes) * 100)
-        : 0;
-
-      const { error: updateErr } = await supabase
-        .from("students")
-        .update({
-          total_classes,
-          attended_classes,
-          attendancePercentage: percentage,
-        })
-        .eq("id", studentId);
-
-      if (updateErr) throw updateErr;
-
-      // ✅ Reflect locally
-      setStudents((prev) =>
-        prev.map((s) =>
-          s.id === studentId
-            ? { ...s, total_classes, attended_classes, attendancePercentage: percentage }
-            : s
-        )
-      );
-
-      console.log(`📊 Updated ${studentId} → ${attended_classes}/${total_classes} (${percentage}%)`);
-    } catch (err) {
-      console.error("⚠️ updateStudentAttendanceStats failed:", err);
-    }
-  };
-
+    await fetchData();
+  } catch (err) {
+    console.error("⚠️ markAttendance failed:", err);
+    throw err;
+  }
+};
   // ---------------- HELPERS ----------------
   const getStudentsByCollege = (collegeId: string) =>
     students.filter((s) => s.collegeId === collegeId);
