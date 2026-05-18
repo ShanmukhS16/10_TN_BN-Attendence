@@ -100,16 +100,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : 0;
 
     const { data: updatedStudent, error: updateStudentError } = await supabase
-      .from("students")
-      .update({
-        total_classes,
-        attended_classes,
-        attendancePercentage,
-      })
-      .eq("id", studentId)
-      .select("id,total_classes,attended_classes,attendancePercentage")
-      .single();
-
+  .from("students")
+  .update({
+    total_classes: total_classes,
+    attended_classes: attended_classes,
+    attendancePercentage: attendancePercentage,
+  })
+  .eq("id", studentId)
+  .select("id,total_classes,attended_classes,attendancePercentage")
+  .single();
     if (updateStudentError) {
       console.error("Student stats update failed:", updateStudentError);
       throw updateStudentError;
