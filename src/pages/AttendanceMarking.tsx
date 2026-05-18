@@ -56,20 +56,27 @@ const AttendanceMarking = () => {
   const students = collegeId ? getStudentsByCollege(collegeId) : [];
   const date = dateStr ? new Date(dateStr) : new Date();
 
-  useEffect(() => {
-    if (!dateStr || students.length === 0) return;
+ useEffect(() => {
+  if (!dateStr || students.length === 0) return;
 
-    const existing = getAttendanceForDate(dateStr) || [];
-    const initial: Record<string, boolean> = {};
+  const existing = getAttendanceForDate(dateStr) || [];
 
-    for (const rec of existing) {
-      if (students.some((s) => s.id === rec.studentId)) {
-        initial[rec.studentId] = !!rec.present;
-      }
+  const initial: Record<string, boolean> = {};
+
+  // default everyone absent
+  for (const student of students) {
+    initial[student.id] = false;
+  }
+
+  // override with saved attendance
+  for (const rec of existing) {
+    if (students.some((s) => s.id === rec.studentId)) {
+      initial[rec.studentId] = rec.present === true;
     }
+  }
 
-    setAttendanceState(initial);
-  }, [dateStr, students.length]);
+  setAttendanceState(initial);
+}, [dateStr, students.length, attendanceRecords.length]);
 
   const handleAttendanceToggle = (studentId: string, present: boolean) => {
     setAttendanceState((prev) => ({
