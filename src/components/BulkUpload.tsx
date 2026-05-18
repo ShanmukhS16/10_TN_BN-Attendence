@@ -1,12 +1,14 @@
 "use client";
+
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BulkUpload() {
-  const { user, colleges } = useAuth();
+  const { colleges, fetchData } = useAuth();
   const [collegeId, setCollegeId] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -14,10 +16,22 @@ export default function BulkUpload() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File too large. Max 2MB allowed.");
+      return;
+    }
+
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const json = XLSX.utils.sheet_to_json(sheet);
+
+    if (json.length > 500) {
+      alert("Maximum 500 students allowed per upload.");
+      return;
+    }
+
     setStudents(json);
   };
 
@@ -27,19 +41,42 @@ export default function BulkUpload() {
 
     setLoading(true);
 
-    const res = await fetch("/api/addStudentsBulk", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        students,
-        collegeId,
-        createdBy: user?.id,
-      }),
-    });
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    const data = await res.json();
-    setLoading(false);
-    alert(data.message);
+      if (!session) {
+        alert("You are not logged in.");
+        return;
+      }
+
+      const res = await fetch("/api/addStudentsBulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          students,
+          collegeId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Upload failed");
+      }
+
+      alert(data.message || "Students uploaded successfully.");
+      setStudents([]);
+      await fetchData();
+    } catch (error: any) {
+      alert(error.message || "Upload failed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,11 +87,12 @@ export default function BulkUpload() {
             📦 Bulk Upload Students
           </CardTitle>
         </CardHeader>
+
         <CardContent>
-          {/* College Selector */}
           <label className="block mb-3 text-sm font-medium text-gray-300">
             Select College
           </label>
+
           <select
             value={collegeId}
             onChange={(e) => setCollegeId(e.target.value)}
@@ -68,7 +106,6 @@ export default function BulkUpload() {
             ))}
           </select>
 
-          {/* File Upload */}
           <input
             type="file"
             accept=".xlsx,.xls,.csv"
@@ -81,6 +118,7 @@ export default function BulkUpload() {
               <p className="mb-2 text-gray-300">
                 {students.length} students ready to upload
               </p>
+
               <div className="max-h-64 overflow-auto border border-gray-700 rounded">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-700">
@@ -92,6 +130,7 @@ export default function BulkUpload() {
                       ))}
                     </tr>
                   </thead>
+
                   <tbody>
                     {students.slice(0, 5).map((student, i) => (
                       <tr key={i} className="border-t border-gray-700">
