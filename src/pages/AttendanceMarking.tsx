@@ -28,11 +28,11 @@ const AttendanceMarking = () => {
     colleges,
     markAttendance,
     fetchData,
-    updateStudentAttendanceStats, // ✅ make sure this exists in AuthContext
   } = useAuth();
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
   const collegeId = searchParams.get("college");
   const dateStr = searchParams.get("date");
 
@@ -45,6 +45,7 @@ const AttendanceMarking = () => {
       navigate("/login");
       return;
     }
+
     if (!collegeId || !dateStr) {
       navigate("/college-selection");
       return;
@@ -55,24 +56,20 @@ const AttendanceMarking = () => {
   const students = collegeId ? getStudentsByCollege(collegeId) : [];
   const date = dateStr ? new Date(dateStr) : new Date();
 
-  // ✅ Prefill only once
   useEffect(() => {
     if (!dateStr || students.length === 0) return;
-    if (Object.keys(attendanceState).length > 0) return;
 
-    try {
-      const existing = getAttendanceForDate(dateStr) || [];
-      const initial: Record<string, boolean> = {};
-      for (const rec of existing) {
-        if (students.some((s) => s.id === rec.studentId)) {
-          initial[rec.studentId] = !!rec.present;
-        }
+    const existing = getAttendanceForDate(dateStr) || [];
+    const initial: Record<string, boolean> = {};
+
+    for (const rec of existing) {
+      if (students.some((s) => s.id === rec.studentId)) {
+        initial[rec.studentId] = !!rec.present;
       }
-      setAttendanceState(initial);
-    } catch (err) {
-      console.error("Failed to prefill attendance:", err);
     }
-  }, [dateStr, students.length]); // removed getAttendanceForDate dependency
+
+    setAttendanceState(initial);
+  }, [dateStr, students.length]);
 
   const handleAttendanceToggle = (studentId: string, present: boolean) => {
     setAttendanceState((prev) => ({
@@ -83,52 +80,37 @@ const AttendanceMarking = () => {
 
   const handleSaveAttendance = async () => {
     if (!dateStr) return;
+
     setIsSaving(true);
+
     try {
-      // Save attendance records
       await Promise.all(
         Object.entries(attendanceState).map(([studentId, present]) =>
           markAttendance(studentId, dateStr, present)
         )
       );
 
-      // ✅ Recalculate attendance for each student after marking
-      for (const student of students) {
-        const records = getAttendanceForDate(null, student.id); // pass null to get all dates
-        const total = records.length;
-        const presentCount = records.filter((r: any) => r.present).length;
-        const percentage = total > 0 ? ((presentCount / total) * 100).toFixed(1) : "0";
-
-        if (updateStudentAttendanceStats) {
-          await updateStudentAttendanceStats(student.id, {
-            totalClasses: total,
-            presentCount,
-            attendancePercentage: percentage,
-          });
-        }
-      }
-
-      // ✅ Refresh context after save
       await fetchData();
 
-      toast.success("✅ Attendance saved & updated successfully!");
+      toast.success("✅ Attendance saved successfully!");
       navigate("/dashboard");
     } catch (error) {
       console.error(error);
-      toast.error("❌ Failed to save attendance. Please try again.");
+      toast.error("❌ Failed to save attendance.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleRefresh = async () => {
-    if (!fetchData) return;
     setIsRefreshing(true);
+
     try {
       await fetchData();
-      toast.success("🔄 Data refreshed!");
       setAttendanceState({});
+      toast.success("🔄 Data refreshed!");
     } catch (err) {
+      console.error(err);
       toast.error("Failed to refresh data.");
     } finally {
       setIsRefreshing(false);
@@ -137,7 +119,8 @@ const AttendanceMarking = () => {
 
   const presentCount = Object.values(attendanceState).filter(Boolean).length;
   const totalStudents = students.length;
-  const attendancePercentage = totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
+  const attendancePercentage =
+    totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
 
   if (!user || !college || !dateStr) return null;
 
@@ -145,7 +128,6 @@ const AttendanceMarking = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Button
               variant="outline"
@@ -156,6 +138,7 @@ const AttendanceMarking = () => {
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
+
             <div className="flex-1">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Mark Attendance
@@ -164,6 +147,7 @@ const AttendanceMarking = () => {
                 {college.name} • {format(date, "EEEE, MMMM do, yyyy")}
               </p>
             </div>
+
             <Button
               variant="outline"
               onClick={handleRefresh}
@@ -171,57 +155,75 @@ const AttendanceMarking = () => {
               className="flex items-center gap-2"
             >
               <RefreshCw
-                className={cn("w-4 h-4", isRefreshing && "animate-spin text-blue-600")}
+                className={cn(
+                  "w-4 h-4",
+                  isRefreshing && "animate-spin text-blue-600"
+                )}
               />
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </Button>
           </div>
 
-          {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            {[
-              {
-                icon: <GraduationCap className="w-5 h-5 text-blue-600" />,
-                label: "College",
-                value: college.code,
-                color: "bg-blue-100",
-              },
-              {
-                icon: <Calendar className="w-5 h-5 text-purple-600" />,
-                label: "Date",
-                value: format(date, "MMM dd"),
-                color: "bg-purple-100",
-              },
-              {
-                icon: <Users className="w-5 h-5 text-green-600" />,
-                label: "Total Students",
-                value: totalStudents,
-                color: "bg-green-100",
-              },
-              {
-                icon: <CheckCircle2 className="w-5 h-5 text-orange-600" />,
-                label: "Present",
-                value: `${presentCount}/${totalStudents}`,
-                color: "bg-orange-100",
-              },
-            ].map((item, i) => (
-              <Card key={i} className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${item.color} rounded-lg flex items-center justify-center`}>
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">{item.label}</p>
-                      <p className="font-semibold">{item.value}</p>
-                    </div>
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-blue-600" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <div>
+                    <p className="text-sm text-gray-600">College</p>
+                    <p className="font-semibold">{college.code}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date</p>
+                    <p className="font-semibold">{format(date, "MMM dd")}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Students</p>
+                    <p className="font-semibold">{totalStudents}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Present</p>
+                    <p className="font-semibold">
+                      {presentCount}/{totalStudents}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Attendance Progress */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm mb-8">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -237,7 +239,6 @@ const AttendanceMarking = () => {
             </CardContent>
           </Card>
 
-          {/* Student List */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -245,6 +246,7 @@ const AttendanceMarking = () => {
                 Student Attendance
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-0">
               {students.length === 0 ? (
                 <div className="text-center py-12">
@@ -252,12 +254,15 @@ const AttendanceMarking = () => {
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
                     No Students Found
                   </h3>
-                  <p className="text-gray-500">No students are registered for this college.</p>
+                  <p className="text-gray-500">
+                    No students are registered for this college.
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {students.map((student, index) => {
                     const isPresent = attendanceState[student.id] || false;
+
                     return (
                       <div
                         key={student.id}
@@ -276,20 +281,26 @@ const AttendanceMarking = () => {
                             >
                               {index + 1}
                             </div>
+
                             <div>
                               <h4 className="text-lg font-semibold text-gray-900">
                                 {student.name}
                               </h4>
+
                               <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                                 <span>
                                   <span className="font-medium">Reg:</span>{" "}
                                   {student.regimentalNo || "N/A"}
                                 </span>
+
                                 <Badge variant="outline" className="text-xs">
                                   {student.rank}
                                 </Badge>
+
                                 <span>
-                                  <span className="font-medium">Attendance:</span>{" "}
+                                  <span className="font-medium">
+                                    Attendance:
+                                  </span>{" "}
                                   {student.attendancePercentage}%
                                 </span>
                               </div>
@@ -303,6 +314,7 @@ const AttendanceMarking = () => {
                               ) : (
                                 <XCircle className="w-5 h-5 text-red-500" />
                               )}
+
                               <span
                                 className={cn(
                                   "font-medium",
@@ -312,6 +324,7 @@ const AttendanceMarking = () => {
                                 {isPresent ? "Present" : "Absent"}
                               </span>
                             </div>
+
                             <Switch
                               checked={isPresent}
                               onCheckedChange={(checked) =>
@@ -329,7 +342,6 @@ const AttendanceMarking = () => {
             </CardContent>
           </Card>
 
-          {/* Save Button */}
           {students.length > 0 && (
             <div className="mt-8 text-center">
               <Button
