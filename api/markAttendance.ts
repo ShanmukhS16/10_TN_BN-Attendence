@@ -124,30 +124,27 @@ export default async function handler(
         .single();
 
     if (statsError) {
-      console.error(
-        "Student stats recalculation failed:",
-        statsError
-      );
-
-      throw statsError;
-    }
-
-    return res.status(200).json({
-      success: true,
-      total_classes: stats.total_classes,
-      attended_classes: stats.attended_classes,
-      attendancePercentage:
-        stats.attendance_percentage,
-    });
-  } catch (error: any) {
-    console.error(
-      "markAttendance API failed:",
-      error
-    );
-
-    return res.status(500).json({
-      error:
-        error.message || "Internal server error",
-    });
-  }
+  console.error("Student stats recalculation failed:", statsError);
+  throw statsError;
 }
+
+await supabase.from("activity_logs").insert({
+  actor_user_id: user.id,
+  action: "attendance_marked",
+  details: {
+    studentId,
+    date,
+    present,
+    total_classes: stats.total_classes,
+    attended_classes: stats.attended_classes,
+    attendancePercentage: stats.attendance_percentage,
+  },
+  timestamp: new Date().toISOString(),
+});
+
+return res.status(200).json({
+  success: true,
+  total_classes: stats.total_classes,
+  attended_classes: stats.attended_classes,
+  attendancePercentage: stats.attendance_percentage,
+});
