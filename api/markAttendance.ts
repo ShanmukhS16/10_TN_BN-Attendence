@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!;
+const supabaseAnonKey =
+  process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_KEY!;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -10,6 +11,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return res.status(500).json({
+        error: "Missing Supabase environment variables",
+      });
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -83,30 +90,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (recordsError) throw recordsError;
 
     const total_classes = records?.length || 0;
-    const attended_classes = records?.filter((r) => r.present).length || 0;
-    const attendancePercentage = total_classes
-      ? Math.round((attended_classes / total_classes) * 100)
-      : 0;
 
-    const { error: updateStudentError } = await supabase
+    const attended_classes =
+      records?.filter((record) => record.present === true).length || 0;
+
+    const attendancePercentage =
+      total_classes > 0
+        ? Math.round((attended_classes / total_classes) * 100)
+        : 0;
+
+    const { data: updatedStudent, error: updateStudentError } = await supabase
       .from("students")
       .update({
         total_classes,
         attended_classes,
         attendancePercentage,
       })
-      .eq("id", studentId);
+      .eq("id", studentId)
+      .select("id,total_classes,attended_classes,attendancePercentage")
+      .single();
 
-    if (updateStudentError) throw updateStudentError;
+    if (updateStudentError) {
+      console.error("Student stats update failed:", updateStudentError);
+      throw updateStudentError;
+    }
 
     return res.status(200).json({
       success: true,
+      student: updatedStudent,
       total_classes,
       attended_classes,
       attendancePercentage,
     });
   } catch (error: any) {
     console.error("markAttendance API failed:", error);
-    return res.status(500).json({ error: error.message || "Server error" });
+
+    return res.status(500).json({
+      error: error.message || "Server error",
+    });
   }
 }
